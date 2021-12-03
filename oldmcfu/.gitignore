@@ -2,7 +2,7 @@
 *
 
 # But not these files...
-!*.adb
-!input
+!*/*.adb
+!*/input
 !.gitignore
 # etc...
