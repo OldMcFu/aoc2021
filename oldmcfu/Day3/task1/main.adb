@@ -31,12 +31,13 @@ begin
                 end if;
             end loop;
         end loop;
-        Gamma_Rate := Line;
         for I in Index_Type loop
             Put_Line(Integer'Image(Arr(I)));
             if Arr(I) > (Cnt/2) then
                 Epsilon_Rate(Integer(I)) := High;
+                Gamma_Rate(Integer(I)) := '0';
             else
+                Gamma_Rate(Integer(I)) := High;
                 Epsilon_Rate(Integer(I)) := '0';
             end if;
         end loop;
