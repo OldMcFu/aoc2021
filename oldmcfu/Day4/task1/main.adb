@@ -9,118 +9,80 @@ with Ada.Strings.Unbounded;
 
 procedure Main is
 
-    type Bingo_Field_Type is array (1 .. 5, 1 .. 5) of Natural;
-    package Bingo_Field_Vectors is new
-        Ada.Containers.Vectors
-        (Index_Type   => Natural,
-            Element_Type => Bingo_Field_Type);
-
-    package Natural_Vectors is new
-        Ada.Containers.Vectors 
-        (   Index_Type => Natural,
-            Element_Type => Natural);
+    type Diagram_Type is array (0 .. 999, 0 .. 999) of Integer;
+    type Coordinates_Type is array (0 .. 3) of Integer;
+    package Coordinates_Vectors is new
+        Ada.Containers.Vectors (   
+            Index_Type   => Natural,
+            Element_Type => Coordinates_Type);
 
     
-    Bingo_Numbers : Natural_Vectors.Vector := Natural_Vectors.Empty_Vector;
-    Bingo_Fields  : Bingo_Field_Vectors.Vector := Bingo_Field_Vectors.Empty_Vector;
-    Sum : Natural := 0;
+    Coordinates : Coordinates_Vectors.Vector := Coordinates_Vectors.Empty_Vector;
+    Diagram : Diagram_Type := (others => (others => -1));
+    
+    procedure String_Replace(S: in out Ada.Strings.Unbounded.Unbounded_String; Pattern, Replacement: Ada.Strings.Unbounded.Unbounded_String) is
+    -- example: if S is "Mary had a XX lamb", then String_Replace(S, "X", "little");
+    --          will turn S into "Mary had a littlelittle lamb"
+    --          and String_Replace(S, "Y", "small"); will not change S
+       Index : Natural;
+   begin
+      loop
+         Index := Ada.Strings.Unbounded.Index(Source => S, Pattern => Pattern);
+         exit when Index = 0;
+         Ada.Strings.Unbounded.Replace_Slice
+           (Source => S, Low => Index, High => Index+Pattern'Length-1,
+            By => Replacement);
+      end loop;
+   end String_Replace;
 
     procedure Read_File(
-        Bingo_Numbers : in out Natural_Vectors.Vector;
-        Bingo_Fields  : in out Bingo_Field_Vectors.Vector
+        Coordinates : in out Coordinates_Vectors.Vector
         ) is
         use Ada.Strings.Maps;
         use Ada.Strings.Unbounded;
         use Ada.Strings.Fixed;
         use Ada.Strings;
         F           : File_Type;
-        File_Name   : constant String := "input";
+        File_Name   : constant String := "test";
         Line        : Unbounded_String;
         Start       : Positive;
         Finish      : Natural;
-        tmp : Bingo_Field_Type;
-        first_dim_cnt : Natural := 1;
-        First_Empty_Line : Boolean := True;
-        
+        tmp         : Coordinates_Type := (others => 0);
+        Cnt         : Integer := 0;
     begin
         
         Open (F, In_File, File_Name);
-        Line    := To_Unbounded_String (Get_Line (F));
-        Start   := To_String (Line)'First;
-        Finish  := 0;
-
-        while Start <= To_String (Line)'Last loop
-            Find_Token (Line, To_Set(','), Start, Ada.Strings.Outside, Start, Finish);
-            exit when Start > Finish;
-            Bingo_Numbers.Append (Natural'Value(To_String (Line)(Start .. Finish)));
-            Start := Finish + 1;
-        end loop;
-
-        loop
-            Line := To_Unbounded_String (Get_Line (F));
-            declare
-                second_dim_cnt : Natural := 1;
-            begin
-                if To_String (Line) = "" then
-                    second_dim_cnt  := 1;
-                    first_dim_cnt := 1;
-                    if First_Empty_Line = False then 
-                        Bingo_Fields.Append (tmp);
-                    end if;
-                    First_Empty_Line := False;
-                else
-                    Start := To_String (Line)'First;
-                    Finish  := 0;
-                    while Start <= To_String (Line)'Last loop
-                        Find_Token (Line, To_Set(' '), Start, Ada.Strings.Outside, Start, Finish);
-                        exit when Start > Finish;
-                        tmp(first_dim_cnt, second_dim_cnt) := Natural'Value(To_String (Line)(Start .. Finish));
-                        Start := Finish + 1;
-                        second_dim_cnt := second_dim_cnt + 1;
-                    end loop;
-                    first_dim_cnt := first_dim_cnt + 1;                
-                end if;
-            end;
-            exit when End_Of_File (F);
+        
+        while not End_Of_File (F) loop
+            Line    := To_Unbounded_String (Get_Line (F));
+            String_Replace (S => Line, Pattern => " -> ", Replacement => Line);
+            Start   := To_String (Line)'First;
+            Finish  := 0;
+            Cnt := 0;
+            while Start <= To_String (Line)'Last loop
+                Find_Token (Line, To_Set(','), Start, Ada.Strings.Outside, Start, Finish);
+                exit when Start > Finish;
+                tmp(Cnt) := (Integer'Value(To_String (Line)(Start .. Finish)));
+                Start := Finish + 1;
+                Cnt := Cnt + 1;
+            end loop;
+            Coordinates.Append (tmp);
         end loop;
         Close(F);
+
     end Read_File;
 
 begin
 
-    Read_File (Bingo_Numbers, Bingo_Fields);
+    Read_File (Coordinates);
 
-    Main_Loop:
-    for BN of Bingo_Numbers loop
-        for BF of Bingo_Fields loop
-            for Row in 1 .. 5 loop
-                Sum := 0;
-                for Col in 1 .. 5 loop
-                    if BN = BF(Row,Col) then 
-                        BF(Row,Col) := 0;
-                    end if;
-                    Sum := Sum + BF(Row,Col);
-                    if Sum = 0 and Col = 5 then
-                        Put_Line ("------------------------------");
-                        Put_Line ("---------BINGO----------------");
-                        Put_Line ("------------------------------");
-                        Put_Line ("Last Bingo Number: " & Natural'Image(BN));
-                        
-                        for X in 1 .. 5 loop
-                            for XX in 1 .. 5 loop
-                                Put (" " & Natural'Image(BF(X,XX)) & " ");
-                                Sum := Sum + BF(X,XX); 
-                            end loop;
-                        Put_Line ("");
-                        end loop;
-                        Put_Line("");
-                        Put_Line("Sum: " & Natural'Image(Sum));
-                        Put_Line("Result = Sum * Called_Number: " & Natural'Image(Sum*BN));
-                        exit Main_Loop;
-                    end if;
-                end loop;
+    for Cords of Coordinates loop
+        for I in 0 ..3 loop
+            for II in 0 .. 3 loop
+            Put_Line (Integer'Image(Cords(I, II)));
             end loop;
         end loop;
-    end loop Main_Loop;
+    end loop;
+
 
 end Main;
