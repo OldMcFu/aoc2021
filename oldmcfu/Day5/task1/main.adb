@@ -18,7 +18,7 @@ procedure Main is
 
     
     Coordinates : Coordinates_Vectors.Vector := Coordinates_Vectors.Empty_Vector;
-    Diagram : Diagram_Type := (others => (others => -1));
+    Diagram : Diagram_Type := (others => (others => 0));
 
     X_Max, Y_Max : Integer := 0;    
     procedure String_Replace(S: in out Ada.Strings.Unbounded.Unbounded_String; Pattern, Replacement: String) is
@@ -46,7 +46,7 @@ procedure Main is
         use Ada.Strings.Fixed;
         use Ada.Strings;
         F           : File_Type;
-        File_Name   : constant String := "test";
+        File_Name   : constant String := "input";
         Line        : Unbounded_String;
         Start       : Positive;
         Finish      : Natural;
@@ -97,50 +97,62 @@ begin
 
     for Cords of Coordinates loop
         declare
+            X1 : constant := 0;
+            X2 : constant := 2;
+            Y1 : constant := 1;
+            Y2 : constant := 3;
             Max, Min : Integer := 0;
         begin
-            if Cords(1) = Cords(3) then
-                -- x equal
-                if Cords(0) > Cords(2) then
-                    Max := Cords(0);
-                    Min := Cords(2);
+            if Cords(Y1) = Cords(Y2) then
+                -- y equal
+                if Cords(X1) > Cords(X2) then
+                    Max := Cords(X1);
+                    Min := Cords(X2);
                 else
-                    Min := Cords(0);
-                    Max := Cords(2);
+                    Min := Cords(X1);
+                    Max := Cords(X2);
                 end if;
-
-                while Min /= Max loop
-                    Diagram(Cords(1), Min) := Diagram(Cords(1), Min) + 1;
+                --Put_Line("Y: " & Integer'Image(Cords(Y1)) & "   " & "X_Min: " & Integer'Image(Min) & "   " & "X_Max: " & Integer'Image(Max));
+                while Min /= (Max + 1) loop
+                    Diagram(Min, Cords(Y1)) := Diagram(Min, Cords(Y1)) + 1;
                     Min := Min + 1;
                 end loop;
-            elsif Cords(0) = Cords(2) then
-                -- y equal
-                if Cords(1) > Cords(3) then
-                    Max := Cords(1);
-                    Min := Cords(3);
+            elsif Cords(X1) = Cords(X2) then
+                -- x equal
+                if Cords(Y1) > Cords(Y2) then
+                    Max := Cords(Y1);
+                    Min := Cords(Y2);
                 else
-                    Min := Cords(1);
-                    Max := Cords(3);
+                    Min := Cords(Y1);
+                    Max := Cords(Y2);
                 end if;
-
-                while Min /= Max loop
-                    Diagram(Min, Cords(0)) := Diagram(Min, Cords(0)) + 1;
+                --Put_Line("X: " & Integer'Image(Cords(X1)) & "   " & "Y_Min: " & Integer'Image(Min) & "   " & "Y_Max: " & Integer'Image(Max));
+                while Min /= (Max + 1) loop
+                    Diagram(Cords(X1), Min) := Diagram(Cords(X1), Min) + 1;
                     Min := Min + 1;
                 end loop;
             else
                 null;
             end if;    
-
         end;
-        
     end loop;
 
-    for Y in 0 .. Y_Max loop
-        for X in 0 .. X_Max loop
-            Put(Integer'Image(Diagram(X, Y)) & " ");
+    declare
+        two_or_higher_cnt : Integer := 0;
+    begin
+        for Y in 0 .. Y_Max loop
+            for X in 0 .. X_Max loop
+                --Put(Integer'Image(Diagram(X, Y)) & " ");
+                if Diagram(X, Y) > 1 then
+                    two_or_higher_cnt := two_or_higher_cnt + 1;
+                end if;
+            end loop;
+            --Put_Line(" ");
         end loop;
-        Put_Line(" ");
-    end loop;
+        Put_Line(Integer'Image(two_or_higher_cnt));        
+    end;
+
+
 
 
 end Main;
